@@ -20,7 +20,7 @@ import './lib/svg.js';
 import './lib/state.js';
 import './lib/ui.js';
 import './lib/tooltips.js';
-
+import { autoNestPolygon, polygonSegments, uniqueCommonLineSegments } from './lib/autoNesting.js';
 // Wait for FB modules to load
 function waitForFB(): Promise<void> {
   return new Promise((resolve) => {
@@ -232,9 +232,49 @@ function bindUI(): void {
 
   // Recompute on window resize
   window.addEventListener('resize', () => requestAnimationFrame(() => updatePageOverflow(pageEl, layoutState)));
-}
+} 
+  const autoNestButton = document.getElementById('autoNestLayout') as HTMLButtonElement | null;
+  const commonLineToggle = document.getElementById('commonLineCutting') as HTMLInputElement | null;
 
+  autoNestButton?.addEventListener('click', () => {
+    if (!lastPanel || !lastPanelConfig) return;
+
+    const rows = Number(layoutElements.pageRows?.value || 1);
+    const cols = Number(layoutElements.pageCols?.value || 1);
+    const count = Math.max(1, rows * cols);
+
+    const svg = pageEl.svgHost?.querySelector('svg');
+    const path = svg?.querySelector('path') as SVGPathElement | null;
+    if (!path) return;
+
+    const length = path.getTotalLength();
+    const sides = Math.max(3, lastPanelConfig.nSides);
+    const points = Array.from({ length: sides }, (_, i) => {
+      const p = path.getPointAtLength((length * i) / sides);
+      return { x: p.x, y: p.y };
+    });
+
+    const placements = autoNestPolygon(points, {
+      count,
+      sheetWidth: 300,
+      sheetHeight: 200,
+      margin: 2,
+      gap: 0,
+      rotations: Array.from({ length: sides }, (_, i) => (i * 360) / sides),
+      step: 1,
+    });
+
+    console.info('Auto Nest placements', placements);
+
+    if (commonLineToggle?.checked) {
+      const uniqueLines = uniqueCommonLineSegments(
+        placements.flatMap((placement) => polygonSegments(placement.points))
+      );
+      console.info('Unique common cut lines', uniqueLines);
+    }
+  });
 window.FB.ui.fixUiTextArtifacts();
+
 bindUI();
 window.FB.ui.updateVisibility(el);
 
