@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feature/auto-nesting-common-lines
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -31,3 +34,6 @@ jobs:
 
       - name: Run auto-nesting regression tests
         run: npm run test:auto-nesting
+
+      - name: Build app
+        run: npm run build
