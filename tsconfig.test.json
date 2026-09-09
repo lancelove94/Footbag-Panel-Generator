@@ -6,7 +6,8 @@
     "outDir": "dist-test",
     "rootDir": "src/lib",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": []
   },
   "include": [
     "src/lib/autoNesting.ts"
